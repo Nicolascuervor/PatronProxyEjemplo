@@ -79,43 +79,32 @@ public class Demo {
     static class StaticFileHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            // --- INICIO DE LOGS ---
-            System.out.println("\n--- StaticFileHandler: Nueva petición recibida ---");
             String uriPath = exchange.getRequestURI().getPath();
-            System.out.println("[LOG] Ruta de la petición original: '" + uriPath + "'");
-
             if (uriPath.equals("/") || uriPath.isEmpty()) {
                 uriPath = "/index.html";
-                System.out.println("[LOG] La ruta era raíz, se buscará: '/index.html'");
             }
 
-            // Construir la ruta sin la barra inicial para el ClassLoader
-            String resourcePath = ("static" + uriPath).substring(1);
-            System.out.println("[LOG] Intentando cargar recurso desde la ruta del JAR: '" + resourcePath + "'");
-            // --- FIN DE LOGS ---
+            // Ruta al recurso en la RAÍZ del JAR (eliminamos "static/")
+            String resourcePath = uriPath.substring(1);
 
             // Intentar cargar el recurso usando el ClassLoader
             try (InputStream is = Demo.class.getClassLoader().getResourceAsStream(resourcePath)) {
                 if (is == null) {
-                    // --- INICIO DE LOGS DE ERROR ---
-                    System.out.println("[ERROR] ¡FALLO! No se encontró el recurso. InputStream es nulo.");
-                    // --- FIN DE LOGS DE ERROR ---
-                    String response = "404 (Not Found): No se pudo encontrar el recurso " + resourcePath + " en el JAR.\n";
+                    // Si el recurso no se encuentra, enviamos el 404
+                    String response = "404 (Not Found): No se pudo encontrar el recurso '" + resourcePath + "' en el JAR.\n";
                     exchange.sendResponseHeaders(404, response.length());
                     try (OutputStream os = exchange.getResponseBody()) {
                         os.write(response.getBytes());
                     }
                 } else {
-                    // --- INICIO DE LOGS DE ÉXITO ---
-                    System.out.println("[ÉXITO] Recurso encontrado. Enviando respuesta 200 OK.");
-                    // --- FIN DE LOGS DE ÉXITO ---
+                    // Si se encuentra, lo enviamos como respuesta
                     String contentType = "text/plain";
                     if (uriPath.endsWith(".html")) contentType = "text/html";
                     else if (uriPath.endsWith(".css")) contentType = "text/css";
                     else if (uriPath.endsWith(".js")) contentType = "application/javascript";
                     exchange.getResponseHeaders().set("Content-Type", contentType);
 
-                    exchange.sendResponseHeaders(200, 0);
+                    exchange.sendResponseHeaders(200, 0); // 0 para longitud desconocida
                     try (OutputStream os = exchange.getResponseBody()) {
                         byte[] buffer = new byte[4096];
                         int bytesRead;
