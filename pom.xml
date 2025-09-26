@@ -18,7 +18,7 @@
     <build>
         <resources>
             <resource>
-                <directory>src/main/resources/static</directory>
+                <directory>src/main/resources/static/index.html</directory>
             </resource>
         </resources>
 
