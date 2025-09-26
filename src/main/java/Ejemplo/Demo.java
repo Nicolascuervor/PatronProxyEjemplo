@@ -84,9 +84,8 @@ public class Demo {
                 uriPath = "/index.html";
             }
 
-            // CORRECCIÓN FINAL: Buscar el recurso desde la raíz del JAR.
-            // Ej: Convierte "/index.html" en "index.html"
-            String resourcePath = uriPath.substring(1);
+            // Ruta correcta que coincide con el pom.xml estándar
+            String resourcePath = ("static" + uriPath).substring(1);
 
             // Intentar cargar el recurso usando el ClassLoader
             try (InputStream is = Demo.class.getClassLoader().getResourceAsStream(resourcePath)) {
