@@ -5,13 +5,13 @@ FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
 
 # Copy the pom.xml file
-COPY pom.xml .
+COPY untitled/pom.xml .
 
 # Download all dependencies
 RUN mvn dependency:go-offline
 
 # Copy the rest of the application's source code
-COPY src ./src
+COPY untitled/src ./src
 
 # Build the application
 RUN mvn package -DskipTests
