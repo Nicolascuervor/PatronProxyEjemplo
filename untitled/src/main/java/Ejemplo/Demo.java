@@ -4,10 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -89,19 +86,40 @@ public class Demo {
             if (uriPath.equals("/")) {
                 uriPath = "/index.html";
             }
-            String filePath = "src/main/resources/static" + uriPath;
-            Path path = Paths.get(filePath);
 
-            if (Files.exists(path)) {
-                exchange.sendResponseHeaders(200, Files.size(path));
-                try (OutputStream os = exchange.getResponseBody()) {
-                    Files.copy(path, os);
-                }
-            } else {
-                String response = "404 (Not Found)\n";
-                exchange.sendResponseHeaders(404, response.length());
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes());
+            // Ruta al recurso DENTRO del JAR.
+            // Maven coloca los archivos de `src/main/resources` en la raíz del JAR.
+            String resourcePath = "/static" + uriPath;
+
+            // Usamos getResourceAsStream para leer desde el Classpath (dentro del JAR)
+            try (InputStream is = Demo.class.getResourceAsStream(resourcePath)) {
+                if (is == null) {
+                    // Si el recurso no se encuentra, enviamos el 404
+                    String response = "404 (Not Found): No se pudo encontrar " + resourcePath + " en el JAR.\n";
+                    exchange.sendResponseHeaders(404, response.length());
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(response.getBytes());
+                    }
+                } else {
+                    // Si se encuentra, lo enviamos como respuesta
+                    // Determinar el Content-Type basado en la extensión del archivo
+                    String contentType = "text/plain";
+                    if (uriPath.endsWith(".html")) {
+                        contentType = "text/html";
+                    } else if (uriPath.endsWith(".css")) {
+                        contentType = "text/css";
+                    } else if (uriPath.endsWith(".js")) {
+                        contentType = "application/javascript";
+                    }
+                    exchange.getResponseHeaders().set("Content-Type", contentType);
+                    exchange.sendResponseHeaders(200, 0); // 0 para longitud desconocida, se enviará en trozos
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = is.read(buffer)) != -1) {
+                            os.write(buffer, 0, bytesRead);
+                        }
+                    }
                 }
             }
         }
