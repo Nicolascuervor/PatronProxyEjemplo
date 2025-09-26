@@ -80,36 +80,31 @@ public class Demo {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String uriPath = exchange.getRequestURI().getPath();
-            if (uriPath.equals("/")) {
+            if (uriPath.equals("/") || uriPath.isEmpty()) {
                 uriPath = "/index.html";
             }
 
-            // Ruta al recurso DENTRO del JAR.
-            // Maven coloca los archivos de `src/main/resources` en la raíz del JAR.
-            String resourcePath = "/static" + uriPath;
+            // Construir la ruta para el ClassLoader (ej: de "/index.html" a "static/index.html")
+            String resourcePath = ("static" + uriPath).substring(1);
 
-            // Usamos getResourceAsStream para leer desde el Classpath (dentro del JAR)
-            try (InputStream is = Demo.class.getResourceAsStream(resourcePath)) {
+            // Intentar cargar el recurso usando el ClassLoader, que es más robusto
+            try (InputStream is = Demo.class.getClassLoader().getResourceAsStream(resourcePath)) {
                 if (is == null) {
                     // Si el recurso no se encuentra, enviamos el 404
-                    String response = "404 (Not Found): No se pudo encontrar " + resourcePath + " en el JAR.\n";
+                    String response = "404 (Not Found): No se pudo encontrar el recurso " + resourcePath + " en el JAR.\n";
                     exchange.sendResponseHeaders(404, response.length());
                     try (OutputStream os = exchange.getResponseBody()) {
                         os.write(response.getBytes());
                     }
                 } else {
                     // Si se encuentra, lo enviamos como respuesta
-                    // Determinar el Content-Type basado en la extensión del archivo
                     String contentType = "text/plain";
-                    if (uriPath.endsWith(".html")) {
-                        contentType = "text/html";
-                    } else if (uriPath.endsWith(".css")) {
-                        contentType = "text/css";
-                    } else if (uriPath.endsWith(".js")) {
-                        contentType = "application/javascript";
-                    }
+                    if (uriPath.endsWith(".html")) contentType = "text/html";
+                    else if (uriPath.endsWith(".css")) contentType = "text/css";
+                    else if (uriPath.endsWith(".js")) contentType = "application/javascript";
                     exchange.getResponseHeaders().set("Content-Type", contentType);
-                    exchange.sendResponseHeaders(200, 0); // 0 para longitud desconocida, se enviará en trozos
+
+                    exchange.sendResponseHeaders(200, 0); // 0 para longitud desconocida
                     try (OutputStream os = exchange.getResponseBody()) {
                         byte[] buffer = new byte[4096];
                         int bytesRead;
