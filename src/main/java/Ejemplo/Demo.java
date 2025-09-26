@@ -19,7 +19,7 @@ public class Demo {
         server.createContext("/", new StaticFileHandler());
         server.setExecutor(null);
         server.start();
-        System.out.println("Server started on port 8080");
+        System.out.println("Server started on port 8080, hola :)");
     }
 
     static class TestHandler implements HttpHandler {
