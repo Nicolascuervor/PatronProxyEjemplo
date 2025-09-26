@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demostración del Patrón Proxy</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Patrón Proxy - Demostración de Caché</h1>
+        <p>
+            Presiona los botones para simular la carga de videos. La primera vez, ambos pueden ser lentos.
+            Intenta presionar el mismo botón varias veces para ver el efecto de la caché del proxy.
+        </p>
+        <div class="buttons">
+            <button id="direct-button">Probar sin Proxy (Lento)</button>
+            <button id="proxy-button">Probar con Proxy (Rápido)</button>
+        </div>
+        <h2>Registro de Actividad:</h2>
+        <pre id="output"></pre>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
