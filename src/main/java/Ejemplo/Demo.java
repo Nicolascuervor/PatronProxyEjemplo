@@ -1,6 +1,5 @@
 package Ejemplo;
 
-
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -8,9 +7,6 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.*;
 import java.net.InetSocketAddress;
 
-/**
- * Clase principal que ahora funciona como un servidor web para demostrar el Patrón Proxy.
- */
 public class Demo {
 
     private static final YouTubeDownloader naiveDownloader = new YouTubeDownloader(new ThirdPartyYouTubeClass());
@@ -21,7 +17,7 @@ public class Demo {
         server.createContext("/test-directo", new TestHandler(naiveDownloader, "directo"));
         server.createContext("/test-proxy", new TestHandler(smartDownloader, "proxy"));
         server.createContext("/", new StaticFileHandler());
-        server.setExecutor(null); // creates a default executor
+        server.setExecutor(null);
         server.start();
         System.out.println("Server started on port 8080");
     }
@@ -37,20 +33,15 @@ public class Demo {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            // Redirigir la salida estándar para capturar la salida de la prueba
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PrintStream ps = new PrintStream(baos);
             PrintStream old = System.out;
             System.setOut(ps);
-
             long time = test(downloader);
-
             System.out.flush();
             System.setOut(old);
-
             String output = baos.toString();
             String response = "Prueba con " + type + ":\n" + output + "Tiempo total: " + time + "ms\n";
-
             exchange.sendResponseHeaders(200, response.getBytes().length);
             OutputStream os = exchange.getResponseBody();
             os.write(response.getBytes());
@@ -59,17 +50,12 @@ public class Demo {
 
         private long test(YouTubeDownloader downloader) {
             long startTime = System.currentTimeMillis();
-
-            // User behavior in our app:
             downloader.renderPopularVideos();
             downloader.renderVideoPage("catzzzzzzzzz");
             downloader.renderPopularVideos();
             downloader.renderVideoPage("dancesvideoo");
-
-            // Users might visit the same page quite often.
             downloader.renderVideoPage("catzzzzzzzzz");
             downloader.renderVideoPage("someothervid");
-
             long estimatedTime = System.currentTimeMillis() - startTime;
             System.out.print("Time elapsed: " + estimatedTime + "ms\n");
             return estimatedTime;
@@ -84,27 +70,23 @@ public class Demo {
                 uriPath = "/index.html";
             }
 
-            // Ruta correcta que coincide con el pom.xml estándar
+            // Ruta correcta que coincide con el pom.xml estándar: "static/index.html"
             String resourcePath = ("static" + uriPath).substring(1);
 
-            // Intentar cargar el recurso usando el ClassLoader
             try (InputStream is = Demo.class.getClassLoader().getResourceAsStream(resourcePath)) {
                 if (is == null) {
-                    // Si el recurso no se encuentra, enviamos el 404
                     String response = "404 (Not Found): No se pudo encontrar el recurso '" + resourcePath + "' en el JAR.\n";
                     exchange.sendResponseHeaders(404, response.length());
                     try (OutputStream os = exchange.getResponseBody()) {
                         os.write(response.getBytes());
                     }
                 } else {
-                    // Si se encuentra, lo enviamos como respuesta
                     String contentType = "text/plain";
                     if (uriPath.endsWith(".html")) contentType = "text/html";
                     else if (uriPath.endsWith(".css")) contentType = "text/css";
                     else if (uriPath.endsWith(".js")) contentType = "application/javascript";
                     exchange.getResponseHeaders().set("Content-Type", contentType);
-
-                    exchange.sendResponseHeaders(200, 0); // 0 para longitud desconocida
+                    exchange.sendResponseHeaders(200, 0);
                     try (OutputStream os = exchange.getResponseBody()) {
                         byte[] buffer = new byte[4096];
                         int bytesRead;
